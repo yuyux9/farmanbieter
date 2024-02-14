@@ -280,7 +280,7 @@ then
   echo 'As you want, cap.'
 fi
 
-echo" "
+echo " "
 echo "
 
 ⠀⠀⠀⠀⠀⠀⢀⣤⣶⣶⣖⣦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀
