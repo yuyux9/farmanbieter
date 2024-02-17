@@ -66,12 +66,53 @@ if
   echo 'Lets install all req'
   echo " "
   apt install ca-certificates curl gnupg lsb-release -y
-  mkdir /etc/apt/demokeyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/demokeyrings/demodocker.gpg
-  echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/demokeyrings/demodocker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
-  apt update -y
-  apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+else
+    echo "Error: /etc/os-release not found. Unable to determine the OS."
+    exit 1
+fi
+
+case $OS in
+    "ubuntu")
+        apt install ca-certificates curl gnupg lsb-release -y
+        mkdir /etc/apt/demokeyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/demokeyrings/demodocker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/demokeyrings/demodocker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+        apt update -y
+        apt install docker-ce docker-ce-cli containerd.io -y
+        # Docker-compose is installed separately for Ubuntu
+        curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        ;;
+
+    "centos")
+        yum install -y epel-release
+        yum install -y ca-certificates curl gnupg lsb-release
+        yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        yum install docker-ce docker-ce-cli containerd.io -y
+        systemctl start docker
+        systemctl enable docker
+        ;;
+
+
+    "debian")
+        apt-get install ca-certificates curl gnupg lsb-release -y
+        mkdir /etc/apt/demokeyrings && curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/demokeyrings/demodocker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/demokeyrings/demodocker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+        apt-get update -y
+        apt-get install docker-ce docker-ce-cli containerd.io -y
+        # Docker-compose is installed separately for Ubuntu
+        curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        ;;
+
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+esac
 elif
   [ "$agree" == "n" ]; then
   echo 'Bye then.'
