@@ -63,6 +63,15 @@ read -p 'This script will install, set and deploy CulhwchFarm. To continue press
 if
   [ "$agree" == "y" ]; then
   echo 'Lets begin then.'
+  echo 'Lets install all req'
+  echo " "
+  apt install ca-certificates curl gnupg lsb-release -y
+  mkdir /etc/apt/demokeyrings && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/demokeyrings/demodocker.gpg
+  echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/demokeyrings/demodocker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+  apt update -y
+  apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 elif
   [ "$agree" == "n" ]; then
   echo 'Bye then.'
