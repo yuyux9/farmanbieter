@@ -65,8 +65,8 @@ if
   echo 'Lets begin then.'
   echo 'Lets install all req'
   echo " "
-  apt install ca-certificates curl gnupg lsb-release -y
 
+#~OS CHECK~
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$ID
