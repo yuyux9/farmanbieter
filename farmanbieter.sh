@@ -1,25 +1,5 @@
 #!/usr/bin/env bash
 
-# ----------------------------------
-#-COLORZ-
-# ----------------------------------
-NOCOLOR='\033[0m'
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHTGRAY='\033[0;37m'
-DARKGRAY='\033[1;30m'
-LIGHTRED='\033[1;31m'
-LIGHTGREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-LIGHTBLUE='\033[1;34m'
-LIGHTPURPLE='\033[1;35m'
-LIGHTCYAN='\033[1;36m'
-WHITE='\033[1;37m'
-
 #~WELCOME MESSAGE~
 cat << "EOF"
                                                                                        ..       .                    s                            
@@ -43,26 +23,33 @@ cat << "EOF"
 
 EOF
 
-#~CHECK IF YOU ARE CONNECTED TO THE WORLD~
-echo " "
-wget -q --spider http://google.com
-
-if
-  [ $? -eq 0 ]
+#~INSTALL GUM~
+if ! command -v gum &> /dev/null
 then
-  printf "${GREEN}Ok, you are online, lets begin.${NOCOLOR}"
+    gum style --foreground 2 "gum not found, installing gum..."
+    sudo apt update && sudo apt install -y gum
+    if ! command -v gum &> /dev/null
+    then
+        gum style --foreground 1 "Failed to install gum. Please install it manually."
+        exit 1
+    fi
+    gum style --foreground 2 "gum installed successfully."
+fi
+
+#~CHECK IF YOU ARE CONNECTED TO THE WORLD~
+if wget -q --spider http://google.com; then
+    gum style --foreground 2 --bold --margin "1" "Ok, you are online, let's begin."
 else
-  printf "${RED}Seem like you are offline, i cannot pong google.com.${NOCOLOR}"
+    gum style --foreground 1 --bold --margin "1" "Seems like you are offline, I cannot ping google.com."
+    exit 1
 fi
 
 #~USER AGREEDMENT~
 echo " "
-read -p 'This script will install, set and deploy CulhwchFarm. To continue press y/n (to not): ' agree
-
-if
-  [ "$agree" == "y" ]; then
-  echo 'Lets begin then.'
-  echo 'Lets install all req'
+if ! gum confirm "This script will install, set, and deploy CulhwchFarm. Do you want to continue?"; then
+    gum style --foreground 1 "User declined. Exiting..."
+    exit 1
+fi
   echo " "
 
 #~OS CHECK~
@@ -70,8 +57,12 @@ if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$ID
 else
-    echo "Error: /etc/os-release not found. Unable to determine the OS."
-    exit 1
+    gum style --foreground 1 "Error: /etc/os-release not found. Unable to determine the OS."
+    if ! gum confirm "Unable to determine the OS. Do you want to continue anyway?"; then
+        gum style --foreground 1 "Exiting due to inability to determine OS."
+        exit 1
+    fi
+    OS="unknown"
 fi
 
 case $OS in
@@ -108,8 +99,11 @@ case $OS in
         ;;
 
     *)
-        echo "Unsupported OS: $OS"
-        exit 1
+        gum style --foreground 1 "Unsupported OS: $OS"
+        if ! gum confirm "Your OS is not officially supported. Do you want to continue anyway?"; then
+            gum style --foreground 1 "Exiting due to unsupported OS."
+            exit 1
+        fi
         ;;
 esac
 elif
@@ -121,218 +115,59 @@ else
 exit
 fi
 
-#~FUNCTION FOR EXISTENSE~
-exists()
-{
-  command -v "$1" >/dev/null 2>&1
-}
-
-#~FUNCTION FOR RANDOM PASS~
-array=()
-while [[ ${#array[@]} -lt 12 ]]; do
-    random_char=$(printf \\$(printf '%03o' $((RANDOM%26+65))))
-    array+=( $random_char )
-done
-
-output=$(printf "%s" "${array[@]}") > /dev/null
-RANDOM_NO_SPACE=${output// /}
-
 #~INSTALLIG FARM N CHECKING FOR GIT~
 echo " "
-read -p 'Checking for git, if it installed. If not, i will install it for you - y/n: ' lzt
-
-if
-  [ "$lzt" == "n" ]
-then
-  echo 'Fuck you then.'
-  exit
-fi
-
-if
-  exists git && [ "$lzt" == "y" ]; then
-  printf "${GREEN}Git found!${NOCOLOR}"
+if ! command -v git &> /dev/null; then
+    gum spin --spinner dot --title "Installing Git" -- apt install git -y
+    gum style --foreground 2 "Git successfully installed!"
 else
-  ! exists git
-  printf "${RED}Git not found.${NOLOCOR} Installing."
-  apt install git -y 2>/dev/null &
-pid=$! # Process Id of the previous running command
-
-spin='-\|/'
-
-i=0
-while kill -0 $pid 2>/dev/null
-do
-  i=$(( (i+1) %4 ))
-  printf "\r${spin:$i:1}" " "
-  sleep .1
-done
-
-  printf "${GREEN}Successful!${NOCOLOR}"
-  echo " "
-  echo 'Now you have git.'
+    gum style --foreground 2 "Git is already installed!"
 fi
 
 echo " "
-read -p 'Git was found/install, so im ready to install CulhwchFarm, are you ready - y/n: ' git
-
-if
-  [ "$git" == "y" ]
-then
-  git clone --recurse-submodules https://github.com/arkiix/CulhwchFarm.git 2>/dev/null &
-pid=$! # Process Id of the previous running command
-
-spin='-\|/'
-
-i=0
-while kill -0 $pid 2>/dev/null
-do
-  i=$(( (i+1) %4 ))
-  printf "\r${spin:$i:1}" " "
-  sleep .1
-done
-
-printf "${GREEN}Successful!${NOCOLOR}"
-echo " "
-
-  cd CulhwchFarm
-elif
-  [ "$git" == "n" ]
-then
-  echo 'What do you want from me then, kutabare.'
-  exit
+if gum confirm "Git is ready. Do you want to clone and set up CulhwchFarm?"; then
+    git clone --recurse-submodules https://github.com/arkiix/CulhwchFarm.git
+    gum style --foreground 2 "CulhwchFarm repository cloned successfully!"
+    cd CulhwchFarm
 else
-  echo 'fuck you.'
-  exit
+    gum style --foreground 1 "What do you want from me then, kutabare..."
+    exit 1
 fi
+echo " "
 
 #~SETTING UP FARM~
 echo " "
-read -p 'Ok, we are ready to change your default dashboard pass, cawabanga - y/n: ' cawabanga
-
-if
-  [ "$cawabanga" == "y" ]
-then
-  NEWPASS=$(echo "${RANDOM_NO_SPACE}") && sed -i "/environment:/,/^\w/{s/SERVER_PASSWORD: '893'/SERVER_PASSWORD: '$NEWPASS'/}" compose.yml
-  printf "${GREEN}Uuh, well, thats it, done.${NOCOLOR}"
-elif
-  [ "$cawabanga" == "n" ]
-then
-  echo 'There is need to be y, but you pick n, fuck you, uwu.'
+if gum confirm "Ready to change your default dashboard password?"; then
+    NEWPASS=$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 12)
+    sed -i "/environment:/,/^\w/{s/SERVER_PASSWORD: '893'/SERVER_PASSWORD: '$NEWPASS'/}" compose.yml
+    gum style --foreground 2 "Password updated successfully!"
 else
-  echo 'fuck you.'
-  exit
+    gum style --foreground 1 "There is need to be y, but you pick n, fuck you, uwu."
 fi
 
 #~DEPLOYING FARM~
 echo " "
-read -p 'Checking for docker, if it installed. If not, i will install it for you - y/n: ' docker
-
-if
-  [ "$docker" == "n" ]
-then
-  echo 'Fuck you then.'
-  exit
-fi
-
-echo " "
-
-if
-  exists docker && [ "$docker" == "y" ]; then
-  printf "${GREEN}Docker found!${NOCOLOR}"
-  echo " "
+if ! command -v docker &> /dev/null; then
+    gum spin --spinner dot --title "Installing Docker" -- apt install docker -y
+    gum style --foreground 2 "Docker successfully installed!"
 else
-  ! exists
-  printf "${RED}Docker not found.${NOCOLOR} Installing."
-  echo " "
-    apt install docker -y 2>/dev/null &
-pid=$! # Process Id of the previous running command
-
-spin='-\|/'
-
-i=0
-while kill -0 $pid 2>/dev/null
-do
-  i=$(( (i+1) %4 ))
-  printf "\r${spin:$i:1}" " "
-  sleep .1
-done
-
-printf "${GREEN}Successful!${NOCOLOR}"
-echo " "
-
-echo " "
-echo 'Now you have docker.'
+    gum style --foreground 2 "Docker is already installed!"
 fi
 
-read -p 'Checking for docker-compose, if it installed. If not, i will install it for you - y/n: ' lztt
-
-if
-  [ "$lztt" == "n" ]
-then
-  echo 'Fuck you then.'
-  exit
-fi
-
-echo " "
-
-if
-  exists docker-compose && [ "$lztt" == "y" ]; then
-  printf "${GREEN}Docker-compose found!${NOCOLOR}"
+if ! command -v docker-compose &> /dev/null; then
+    gum spin --spinner dot --title "Installing Docker Compose" -- apt install docker-compose -y
+    gum style --foreground 2 "Docker Compose successfully installed!"
 else
-  ! exists
-  printf "${RED}Docker-compose not found.${NOCOLOR} Installing."
-  echo " "
-  apt install docker-compose -y 2>/dev/null &
-pid=$! # Process Id of the previous running command
-
-spin='-\|/'
-
-i=0
-while kill -0 $pid 2>/dev/null
-do
-  i=$(( (i+1) %4 ))
-  printf "\r${spin:$i:1}" " "
-  sleep .1
-done
-
-printf "${GREEN}Successful!${NOCOLOR}"
-echo " "
-
-  echo " "
-  echo 'Now you have docker-compose.'
+    gum style --foreground 2 "Docker Compose is already installed!"
 fi
 
-
 echo " "
-read -p 'Finally. Now we can deploy your farm and start explode a/d with flags from your exploits! Make some noise - y/n: ' noise
-
-if
-  [ "$noise" == "y" ]
-then
-  sudo docker-compose up --build -d
-  echo " "
-  echo 'Farm now running in background, to stop it, type: docker-compose down.'
-  echo " "
-  echo "
-
-  +-----------------------------------+
-  |        FARM IS RUNNING ON         |
-  +-----------------------------------+
-                  
-            http://vuln:8893
-
-  +-----------------------------------+
-  |         FARM CREDENTIALS          |
-  +-----------------------------------+
-                                      
-         "${RANDOM_NO_SPACE}"
-                                      
-  +-----------------------------------+
-                                          "
-elif
-  [ "$noise" == "n" ]
-then
-  echo 'As you want, cap.'
+if gum confirm "Finally, do you want to deploy your farm?"; then
+    sudo docker-compose up --build -d
+    gum style --foreground 2 --border double --border-foreground 3 --margin "1" --padding "1" \
+    "FARM IS RUNNING ON\n\nhttp://vuln:8893\n\nFARM CREDENTIALS\n\n${NEWPASS}"
+else
+    gum style --foreground 1 "Deployment canceled by looser."
 fi
 
 echo " "
@@ -350,5 +185,5 @@ echo "
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣷⣶⣴⣾⠏⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠛⠛⠛⠋⠁⠀⠀⠀
                           "
-echo 'Thanks for using me, take care and good luck ^v^'
-echo 'by yuyu from 893crew'
+gum style --foreground 6 --bold --align center "Thanks for using me, take care and good luck ^v^"
+gum style --foreground 6 --bold --align center "by yuyu from 893crew"
