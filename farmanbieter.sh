@@ -24,6 +24,7 @@ cat << "EOF"
 EOF
 
 #~INSTALL GUM~
+echo " "
 if ! command -v gum &> /dev/null
 then
     gum style --foreground 2 "gum not found, installing gum..."
@@ -37,6 +38,7 @@ then
 fi
 
 #~CHECK IF YOU ARE CONNECTED TO THE WORLD~
+echo " "
 if wget -q --spider http://google.com; then
     gum style --foreground 2 --bold --margin "1" "Ok, you are online, let's begin."
 else
@@ -106,14 +108,6 @@ case $OS in
         fi
         ;;
 esac
-elif
-  [ "$agree" == "n" ]; then
-  echo 'Bye then.'
-  exit
-else
-  echo 'Ha-ha, you soo funny...'
-exit
-fi
 
 #~INSTALLIG FARM N CHECKING FOR GIT~
 echo " "
