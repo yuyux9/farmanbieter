@@ -159,7 +159,7 @@ echo " "
 if gum confirm "Finally, do you want to deploy your farm?"; then
     sudo docker-compose up --build -d
     gum style --foreground 2 --border double --border-foreground 3 --margin "1" --padding "1" \
-    "FARM IS RUNNING ON\n\nhttp://vuln:8893\n\nFARM CREDENTIALS\n\n${NEWPASS}"
+    "FARM IS RUNNING ON - http://vuln:8893 & FARM CREDENTIALS - ${NEWPASS}"
 else
     gum style --foreground 1 "Deployment canceled by looser."
 fi
